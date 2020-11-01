@@ -1124,31 +1124,191 @@
     7. 卸載光碟印象檔輸入指令`umount /media/iso`
        ![卸載光碟片](./pics/umount.png "卸載光碟片")
 ### 單元 3 - 加入新硬碟，MBR 與新一代 GPT
+  * 建立 **MBR** 的磁碟分割區
+    1. 設定VirtualBox的磁碟分割
+       ![設定1](./pics/disk_partition1.png)
+       ![設定2](./pics/disk_partition2.png)
+    2. 使用`fdisk -l /dev/sdb`命令檢是剛剛建立的磁碟
+       ![檢視剛剛建立的磁碟](./pics/fdisk_view_disk.png "檢視剛剛建立的磁碟")  
+    3. 輸入`fdisk /dev/sdb`(fdisk是專門建立MBR用的),再輸入`m`會顯示參數說明  
+       輸入`p`可以檢視目前磁碟的分割區狀態,沒有分割區就沒有列表  
+       再輸入`n`後會顯示提示問是要建立主分割區(primary)還是擴充分割區(extended)  
+       再輸入`p`後會詢問分割區的編號,按下enter使用預設的後,再詢問磁碟分割的起始磁區,  
+       按下enter使用預設的(2048)後,再詢問結束磁區,可輸入`+800M`表示此分割區要有800MB,  
+       按下enter後就建立分割區完成,再輸入`p`檢視剛剛建立的partition內容
+       ![建立partition](./pics/fdisk_create_partition.png "建立partition")
+    4. 輸入指令`blkid`檢是剛剛建立的磁碟分割區
+       ![使用blkid檢視剛建立的磁碟分割區](./pics/blkid_new_partition.png "使用blkid檢視剛建立的磁碟分割區")
+    5. **剛建立的磁碟分割必須格式化後才能掛載使用**,所以輸入`mkfs`按下tab兩下檢視該使用哪種檔案系統格式, CentOS或Red Hat 8 使用的是 `mkfs.xfs`.  
+       輸入 `mkfs.xfs -f /dev/sdb1` (-f表示執行格式化,後面表示要格式化的磁區)
+       ![格式化partition](./pics/mkfs.xfs_format_partition.png "格式化partition")
+    6. 建立一個資料夾用來給剛格式化好的分割區掛載用  
+       輸入 `mkdir /disk1` 從根目錄建立disk目錄,  
+       再輸入 `mount /dev/sdb1 /disk1` 將磁碟分割區掛載到 `disk1` 上  
+       ![將新磁碟分割區掛載](./pics/mount_new_partition.png "將新磁碟分割區掛載")
+    7. 用 `blkid` 確認`/dev/sdb1`已掛載到 `/disk1` 上,這時就可以切換到`/disk`目錄下作新增檔案....等等的操作了  
+       ![檢查partition](./pics/blkid_check_partition.png "檢查partition")
+       
+  * 傳統的磁碟機可細分磁區(Sector)與磁軌(Track)兩種單位，其中磁區的物理量設計有兩種大小，分別是 512bytes 與 4Kbytes ，  
+    整顆磁碟的第一個磁區特別的重要，因為他記錄了整顆磁碟的重要資訊！  
+    早期磁碟第一個磁區裡面含有的重要資訊我們稱為MBR (Master Boot Record) 格式，  
+    但是由於近年來磁碟的容量不斷擴大，造成讀寫上的一些困擾，  
+    甚至有些大於 2TB 以上的磁碟分割已經讓某些作業系統無法存取。  
+    因此後來又多了一個新的磁碟分割格式，稱為 GPT (GUID partition table)
 
+    早期的 Linux 系統為了相容於 Windows 的磁碟，  
+    因此使用的是支援 Windows 的 **MBR(Master Boot Record, 主要開機紀錄區)** 的方式來處理開機管理程式與分割表！  
+    而開機管理程式紀錄區與分割表則通通放在磁碟的第一個磁區，這個磁區通常是 512bytes 的大小
+    ![說明3](./pics/disk_partition3.png)
 
 ### 單元 4 - 建立 GPT 硬碟分割區，使用 parted
-
-
+  * 建立 **GPT** 的磁碟分割區步驟
+    1. 從VirtualBox建立步驟同上
+    2. 進入後應該會多一個`/dev/sdc`的設備裝置,但用`blkid`檢視應該是沒有剛剛建立的磁碟  
+       使用`fdisk -l /dev/sdc`檢視剛剛建立的2GB硬碟是否存在(只能用來檢視,無法建立GPT)  
+       ![blkid檢視磁碟](./pics/blkid_new_disk2.png "blkid檢視磁碟")  
+    3. 建立GPT格式的磁碟要使用 `parted` 指令,後面輸入裝置 `/dev/sdc` 進入選單列表  
+       輸入 `help` 可檢視各種操作, 輸入 `print` 可列出目前磁碟的狀態  
+       再輸入 `mktable gpt` 表示分割區使用 `gpt`  
+       再輸入 `mkpart primary xfs 1MB 800MB`  
+       `mkpart` 表示使用`mkpart`建立分割區,參數2表示建立主分割區,參數3表示檔案系統使用xfs, 參數4表示分割區的起始位置,參數5表示結束位置  
+       建立完畢後不需要儲存,輸入`quit`就可以離開了  
+       ![建立GPT磁碟分割區](./pics/parted_new_disk2.png "建立GPT磁碟分割區")
+    4. 使用 `blkid` 檢視剛剛建立的分割區是否出現  
+       ![blkid檢視新磁碟](./pics/blkid_check_new_disk2.png "blkid檢視新磁碟")
+    5. 使用 `mkfs.xfs -f /dev/sdc1` 格式化此分割區
+       ![mkfs格式化磁碟](./pics/mkfs.xfs_new_disk2.png "mkfs格式化磁碟")
+    6. 建立一個新目錄`mkdir /disk2`用來掛載剛剛的磁碟分割區  
+       再輸入 `mount /dev/sdc1 /disk2` 就可以把磁碟分割區掛載上去 
+       ![mount掛載磁碟](./pics/mount_new_disk2.png "mount掛載磁碟")
+    
+  * 系統開機時,是不會把剛剛建立的磁碟分割區掛載上去,因為 `/etc/fstab` 內沒有這些分割區的資訊  
+      ![檢視檔案fstab](./pics/fstab_view.png "檢視檔案fstab")
 ### 單元 5 - Linux 開機自動掛載 /etc/fstab
+  * `/etc/fstab` 這個檔案開機時會被自動讀取並幫忙把 **分割區掛/檔案/目錄** 掛載進來
+  * 將新磁碟分割區掛載到/etc/fstab內
+    1. 輸入`cp /etc/fstab /etc/fstab.backup` 先備份
+    2. 再輸入 `blkid /dev/sdc1` 檢視此裝置  
+    3. [危險動作]再輸入 `blkid /dev/sdc1 >> /etc/fstab` 將`sdc1`資訊附加到 `/etc/fstab`檔案的底部  
+    ![blkid將新磁碟資訊附加到fstab內](./pics/blkid_append_to_fstab.png "blkid將新磁碟資訊附加到fstab內")  
+    4. 再輸入 `vim /etc/fstab` 進去修改檔案內容,最後一行應該會有剛剛寫入的新磁碟資訊    
+       輸入 `i` 進入編輯模式,將"UUID資料"之後的內容都按delete鍵刪除,  再按下`tab`鍵產生空白,  
+       再輸入`/disk2`,再按下`tab`鍵產生空白,再輸入`xfs`告訴linux使用xfs格式,  
+       再按下`tab`鍵產生空白,再輸入 `defaults`,再按下`tab`鍵或空白鍵產生空白
+       再輸入 `0` 這是告訴linux當使用備份指令`dump`時,是否備份此分割區(0：不要做備份﹔1：要做備份﹔2：要做備份，重要度比 1 小)  
+       再輸入 `0` 這是告訴linux是否於開機時以 `fsck` 檢驗磁區 (0：不檢驗﹔1：先檢驗﹔2：後檢驗)  
+       再按下`esc`切到一般模式再輸入`:`切到命令模式並輸入`wq`儲存離開
+       ![vim修改tstab](./pics/vim_modify_new_disk2.png "vim修改tstab")  
+    5. 這時要檢查剛剛修改的檔案有沒有問題,不然重開機就開不了機了(QQ)  
+       輸入 `mount -a` 試者掛載剛改的fstab檔案,  
+       再輸入 `cat /proc/mounts` 檢視剛剛掛載的所有資料  
+       或輸入 `cat /proc/mounts | grep sdc1` 過濾並檢視剛剛掛載磁碟  
+       檢視一下最後面是否有剛剛修改的`/dev/sdc1`  
+       ![mount_a重新掛載並檢查](./pics/mount_all_and_check.png "mount_a重新掛載並檢查")
+    6. 確認後輸入 `reboot` 重新開機
+    7. 輸入 `blkid` 檢視 `/dev/sdc1`的新磁碟是否存在  
+       再輸入 `df -h` 檢查掛載點是否已掛到 `/disk2` 上  
+       或輸入 `lsblk` 檢查掛載點是否已掛到 `/disk2` 上
+       ![reboot_and_review](./pics/reboot_and_review_disk2.png "reboot_and_review")
 
-
+  * 總結流程: 加入一顆硬碟 -> 建立分割區 -> 格式化 -> 掛載 -> 檢查 -> 加入fstab自動掛載
 ## 第 6 章 Linux 的帳號、群組與權限
 ### 單元 1 - Linux的使用者帳號與群組
-
+  * linux的帳號管理組成是群組+帳號,建立帳號前要先建立群組, lunix的群組檔案在 `/etc/group`  
+    輸入 `cat /etc/group` 檢視群組資訊  
+    ![檢視群組資訊](./pics/group_view.png "檢視群組資訊")  
+  * 建立群組輸入 `groupadd rd` 建立一個rd群組  
+    ![groupadd建立群組](./pics/groupadd.png "groupadd建立群組")
+  * 建立使用者輸入 `useradd test01`  
+    linux做了兩件事,首先因為沒有指定group,所以會在/etc/group檔案內再多一個`test01`群組  
+    接者在`/etc/passwd` 檔案(帳號資料檔)會看到剛剛建立的帳號  
+    ![useradd新增使用者](./pics/useradd_newuser.png "useradd新增使用者")  
+    近年來的linux將密碼放到另一個檔案 `/etc/shadow`  
+    輸入 `tail -n 10 /etc/shadow` 檢視 `shadow` 檔案會看到剛剛建立的帳號但密碼是空的
+    ![檢視shadow檔案](./pics/passwd_shadow_file.png "檢視shadow檔案")
+  * 系統在建立帳號時,會幫帳號產生一個`/home/account`目錄並從`/etc/shel`將檔案複製都過來  
+    並將檔案的使用者權限都改成此使用者
+    ![複製基礎檔案](./pics/skel_files.png "複製基礎檔案")
 ### 單元 2 - 新增群組與帳號，刪除帳號
-
-
+  * 輸入 `id knock` 可檢視此帳號所屬的群組資訊  
+    ![id檢視帳號的群組訊息](./pics/id_account.png "id檢視帳號的群組訊息")
+  * 建立帳號並指定群組輸入 `useradd -g 群組名稱 帳號名稱`  
+    ![useradd建立帳號並指定群組](./pics/useradd_with_group.png "useradd建立帳號並指定群組")
+  * 已存在的帳號新增指定群組使用 `usermod -G 群組名稱 帳號名稱`
+    ![已存在帳號新增另一個群組](./pics/usermod_append_group.png "已存在帳號新增另一個群組")  
+  * 刪除使用者輸入 `userdel -r 帳號名稱`  
+    會刪除 `/etc/passwd` 內的使用者紀錄  
+    和 `/etc/group` 使用者所屬群組的紀錄  
+    和 `/home/帳號名稱` 使用者的家目錄  
+    和 `/var/mail/` 使用者的email目錄
+    若沒有輸入 `'-r'` 使用者的家目錄 `/home/帳號名稱` 不會被刪除
+    ![userdel刪除使用者帳號](./pics/userdel_r_account.png "userdel刪除使用者帳號")
 ### 作業 1 - 建立群組與帳號並設定練習
-
+  * 題目:  
+    1.  建立三個群組，名稱為 admin, design, planning
+    2.  再建立以下 5 個帳號與其所屬群組：  
+        luke 為 admin 群組  
+        yang 為 design 群組  
+        gary 為 planning 群組，附屬群組為 admin  
+        mary 為 design 群組，附屬群組為 admin 與 planning  
+        jane 為 admin 群組，附屬群組為 planning  
+        繳交內容 (1):  
+　        執行 history 指令可以列出所有指令的歷史記錄，  
+          請截圖或複製以上建立群組與帳號的指令繳交。  
+        繳交內容 (2):  
+　        再分別使用 id 指令列出五個人的設定結果，截圖或複製指令與輸出文字繳交。  
+    ![作業截圖](./pics/homework-6.png "作業截圖")
 
 ### 單元 3 - 刪除群組，讓使用者無法登入
-
-
+  * 刪除群組輸入 `groupdel 群組名稱` 就會刪除 `/etc/group` 內的群組紀錄  
+    若刪除的群組是還有人使用的,會跳出錯誤顯示無法刪除,除非把使用群組的帳號都刪除光了
+    ```bash=
+    [root@localhost ~]# groupdel admin
+    groupdel: cannot remove the primary group of user 'luke'
+    [root@localhost ~]#
+    ```
+  * **新創建的帳號**沒有設定密碼的情況下是**無法登入**的,  
+    使用 `passwd 帳號名稱` (注意:若按下enter是更改當前使用者的密碼)後就可正常登入  
+    ![passwd變更指定帳號的密碼](./pics/passwd_change_password.png "passwd變更指定帳號的密碼")  
+  * 禁止某個帳號登入可使用`vim`方式進入`/etc/passwd`檔案,再把此帳號的 `/bin/bash` 改成 `sbin/nologin` 
+    ![shell改成nologin就無法登入](./pics/shell_change_to_nologin.png "shell改成nologin就無法登入")  
+    [建議]輸入`chsh 帳號名稱` (change shell)也可以達到同樣效果  
+    ![chsh改成nolgoin就無法登入](./pics/chsh_to_nologin.png "chsh改成nolgoin就無法登入")  
+    當使用者輸入密碼後就會直接被關閉TTY視窗,無法登入了
 ### 單元 4 - 檔案權限管理與變更
-
+  * linux的[檔案權限](http://linux.vbird.org/linux_basic/0210filepermission.php)分3個group,分別是**檔案擁有者可具備的權限**,**加入此群組之帳號的權限**,**非本人且沒有加入本群組之其他帳號的權限**
+    ![檔案權限群組](./pics/file_permission.png "檔案權限群組")  
+  * 權限值分別代表每個權限groupu有rwx都佔1bit,用二進位表示  
+    用下面範例的data.txt檔說明 `rw-r--r--`表示
+    第一個group是擁有者可讀可寫但不能執行: `rw-` (權限值:6)  
+    第二個group是在群組內的人可讀不可寫也不能執行: `r--` : (權限值:4)  
+    第三個group是不在群組內也非擁有者的人可讀不可寫也不能執行: `r--` : (權限值:4)  
+    此檔案的權限值表示 `644`
+    ```bash=
+    [root@localhost ~]# ls -l
+    總計 56
+    -rw-r--r--. 1 root root     0 10月 15 16:04 ]
+    -rw-------. 1 root root  1895 10月 11 20:12 anaconda-ks.cfg
+    -rw-r--r--. 1 root root   117 10月 16 00:15 data.txt
+    ```
+  * 改變權限可輸入 `chmod 755 data.txt`  
+    ![chmod改變權限](./pics/chmod_755_file.png "chmod改變權限")  
+    也可使用group的縮寫代表(`u`ser, `g`roup, `o`ther) 
+    `chmod u-rx` 表示把user的`r`和`x`權限移除  
+    `chmod g+rx` 表示把group的`r`和`x`權限加上去 
+    `chmod go=rw` 表示把other和group設定成有`r`和`w`權限但沒有`x`權限 
+    `chmod a=r` 裡面的a表示全部group,就是把三個群組都設定成只有`r`權限  
 
 ### 單元 5 - 目錄資料夾的權限
-
+  * 當**檔案類型**為**目錄**時的權限系統稍微不一樣  
+    * `r` : 列出目錄內容
+    * `w` : 可在目錄中編輯或刪除檔案  
+    * `x` : 可進入該目錄(使用者可否用 `cd` 指令進入該目錄)
+  * 範例將目錄的other權限`rx`移除,其他使用者就無法進入該目錄也 `cd` 不過去了
+    ![變更目錄的權限](./pics/chmod_directory.png "變更目錄的權限")  
+  * 使用 `chgrp` 可以把某個資料夾或檔案的群組權限換成另一個群組權限  
+    若使用者有另一個群組權限就可以進入了
+    ![chgrp改變檔案或目錄所屬的群組](./pics/chgrp.png "chgrp改變檔案或目錄所屬的群組")
 
 ## 第 7 章 系統行程操作與管理
 ### 單元 1 - 行程管理與 ps 指令
