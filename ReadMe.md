@@ -1312,13 +1312,54 @@
 
 ## 第 7 章 系統行程操作與管理
 ### 單元 1 - 行程管理與 ps 指令
-
+  * 每次執行指令時,linux都會產生一個process來做命令的執行.
+    每個process都會有個 **id** 簡稱 **pid** 
+    ![demo_process](./pics/demo_process.png "process示意圖")
+  * `ps`指令可列出目前正在執行的process狀態,加上`-f`參數可以列出詳細資訊
+    ![ps指令查詢目前Process執行狀態](./pics/ps_and_f.png "ps指令查詢目前Process執行狀態")
+  * `ps aux` 可查詢目前所有的process(包含系統和其他使用者)
+     (PID=1這個是Lnux裡面的GRUB選定磁碟分割區開機之後,會自動執行`systemd`指令,這是第一個Process,由這個process再去生成以下的process)
+     ![ps_aux列出包含系統和其他使用者的行程](./pics/ps_aux.png "ps_aux列出包含系統和其他使用者的行程") 
+  * `top` 指令用來查看process的動態狀態,按下 `Pageup`和`Pagedn`可切換上下頁,按Q鍵結束檢視  
+    ![top檢視process動態狀態](./pics/top_monitorProcess.png "top檢視process動態狀態")  
+    
 ### 單元 2 - 背景行程管理
-
+  * 一般輸入的命令屬於前景行程,所以執行完畢後,才能在終端機再執行下一個指令,
+    但如果有些工作很耗費時間,希望能在背景執行可以在指令後面加上 `&` 
+    這樣這個命令就會變成背景行程執行
+    ![&背景程序執行命令](./pics/background_process.png "&背景程序執行命令")
+  * `jobs` 指令可列出目前背景行程的PID和狀態  
+    ![jobs列出背景行程的執行狀態](./pics/jobs_print_backgroundProcess.png "jobs列出背景行程的執行狀態")
+  * 若要暫停正在執行的命令可按下 `Ctrl`+`Z` ,接者輸入`bg`表示把暫停的行程丟到背景執行  
+    ![Ctrl+Z暫停指令再輸入bg將暫停的指令丟到背景繼續執行](./pics/bg_runWithBackgroundProcess.png "Ctrl+Z暫停指令再輸入bg將暫停的指令丟到背景繼續執行")
+  * 若要將正在背景執行的process取回前景則輸入 `fg`,若要指定取回的process就輸入jobs上列表的編號取回想要的process  
+    ![fg將背景行程改到前景執行](./pics/fg_runToForeGround.png "fg將背景行程改到前景執行")
+    
 ### 單元 3 - 行程優先權，nice 指令
-
+  * linux中行程管理有優先級(nice值: -20 ~ 19),數值越低表示越優先執行,通常是0
+    ![process_priority](./pics/view_priority.png "process_priority")
+  * `nice -n -10 指令` 可以將指令指定其nice值,PRI則是linux的優先權值(每個OS都不一樣)  
+     ![nice指令指定命令執行的優先順序值](./pics/nice_value.png "nice指令指定命令執行的優先順序值")
+  * `kill` 指令可以指定PID將process殺掉,它會送出一個 **15 TERM** 訊號到行程中,來結束行程  
+     ![kill_PID](./pics/kill_pid.png "kill殺掉指定的process")  
+     若輸入`kill`仍無法殺掉process可帶入參數 `-9`,表示直接殺掉此process,強制殺掉行程 
+     ![kill_強制殺掉指定的process](./pics/kill_process_force.png "kill_強制殺掉指定的process")  
+     若想要將某個被執行多次的命令殺掉可輸入`killall 指令名稱`,就會將這個指令的所有process都殺掉 (輸入參數 `-9` 可以強制殺掉)  
+     ![killall](./pics/killall.png "killall殺掉多個process")
 ### 單元 4 - 系統行程資訊 /proc 虛擬檔案
-
+ * 行程的資訊放在 `/proc` 目錄之下,裡面的檔案叫"**系統行程虛擬檔案**",  
+   不是真的檔案,只是藉由內容系統告訴你目前的狀況
+ * `tree` 指令可以查看 `/proc` 下的檔案樹狀結構
+   所有的Process ID都在樹狀結構下可看到都透過PID=1衍生出一堆Process  
+   ![tree命令檢視proc下的檔案樹狀結構](./pics/tree_view_proc.png "tree命令檢視proc下的檔案樹狀結構")  
+  * 可透過 `cat /proc/cpuinfo` 檢視目前server的CPU資訊
+    ![view_CPU_INFO](./pics/view_CPU_info.png "檢視CPU資訊")  
+  * 可透過 `cat /proc/meminfo` 檢視目前server的記憶體資訊
+    ![view_memory_info](./pics/view_Memory_info.png "檢視記憶體資訊")
+  * 可透過 `cat /proc/partitions` 檢視目前server的磁碟分割區資訊
+    ![view_partitions](./pics/view_partition_info.png "檢視磁碟分割區資訊")  
+  * 可透過 `cat /proc/sys/kernel/hostname` 檢視目前server的名稱資訊
+    ![view_hostname](./pics/view_hostname_info.png "")
 ## 第 8 章 Linux 防火牆
 ### 單元 1 - 防火牆機制 FirewallD 介紹
 
