@@ -1362,10 +1362,95 @@
     ![view_hostname](./pics/view_hostname_info.png "")
 ## 第 8 章 Linux 防火牆
 ### 單元 1 - 防火牆機制 FirewallD 介紹
-
+  * 限制網路的流量可以透過網路卡進入系統
+    ![firewall](./pics/linux_firewall.png "linux防火牆示意圖")
+  * linux中只要是常駐背景的程式簡稱 **Deamon** ,通常名稱後面會有個 **D**  
+    firewallD就表示是常駐背景的程式,也是一個管理工具,但資料最後能否通過linux,  
+    是取決於核心內的 `netfilter` 模組, `Firewalld` 主要工作是管理Port號進出的許可.  
+    傳統的 `iptables` 在每次修改防火牆時都要清除舊規則，重新套用一次新規則，  
+    使用上不是很方便，而新的 `firewalld` 以區域（`zone`）的方式管理規則，  
+    並使用動態的方式執行，修改規則後可立即生效，也不需要重新啟動系統的服務.
+    ![netfilter](./pics/kernel_netfilter.png "")
+  * 輸入 `firewall-cmd --get-zones` 檢視目前OS上有多少 `zone` 可以設定.  
+    所謂的 zone 就表示主機位於何種環境，需要設定哪些規則，在 firewalld 裡共有 7 個zones.  
+      1. public： 公開的場所，不信任網域內所有連線，只有被允許的連線才能進入，一般只要設定這裡就可以了.
+      2. external： 公開的場所，應用在IP是NAT的網路.
+      3. dmz： (Demilitarized Zone) 非軍事區，允許對外連線，內部網路只有允許的才可以連線進來.
+      4. work： 公司、工作的環境
+      5. home： 家庭環境.
+      6. internal： 內部網路，應用在NAT設定時的對內網路.
+      7. trusted： 接受所有的連線.
+      8. drop： 任何進入的封包全部丟棄，只有往外的連線是允許的.
+      9. block： 任何進入的封包全部拒絕，並以 icmp 回覆對方 ，只有往外的連線是允許的.  
+    ![檢視防火牆目前有哪些zone可設定](./pics/firewall_view_zones.png "檢視防火牆目前有哪些zone可設定")
+  * 輸入 `firewall-cmd --get-default-zone` 檢視目前所在的 `zone` 位置.  
+    ![檢視目前所在的zone位置](./pics/firewall_view_default_zone.png "")
 ### 單元 2 - 允許特定服務通過防火牆
+  * 輸入 `firewall-cmd --list-all` 可列出目前系統上active的預設zone詳細資訊（runtime）.  
+    ![firewall列出目前預設active的服務資訊](./pics/firewall_list_all.png "firewall列出目前預設active的服務資訊")  
+  * 可以使用的服務(`services`)存放在 `/usr/lib/firewalld/services`.  
+    ![檢視可以給firewalld使用的服務列表](./pics/view_firewalld_services.png "檢視可以給firewalld使用的服務列表")  
+    輸入 `cat /usr/lib/firewalld/services/ssh.xml` 可檢視檔案內的port設定.  
+    ![檢視所使用的SSH服務設定值](./pics/view_ssh_info.png "檢視所使用的SSH服務設定值")
+  * 若想要將http服務(port:80)從防火牆中打開,可輸入指令 `firewall-cmd --add-service=http` 就可以將 `port 80` 都開放  
+    ![開啟http服務](./pics/firewall_add_service_http.png "開啟http服務")
+  * 若想開放某個指定的 `port` 可輸入指令 `firewall-cmd --add-port=9527/tcp --permanent --zone=public` 再輸入 `firewall-cmd --reload` 讓系統重新載入設定  
+    ![開放指定port](./pics/firewall_add_port.png "開放指定port")  
+  * 若環境沒在用 DHCP ，則可以將他關掉 DHCP 服務 port  
+    ★★★ 關掉 DHCP 服務 port ★★★  
+    ```bash=
+    sudo firewall-cmd --zone=public --remove-service dhcpv6-client
+    ```  
+    暫時允許外部連接本機 DNS 服務  
+    ★★★ 暫時開啟 DNS port 53 ★★★
+    ```bash=
+    sudo systemctl start named
+    sudo systemctl enable named
+    sudo firewall-cmd --add-service=dns
+    sudo firewall-cmd --reload
+    firewall-cmd --list-all
+    public (default, active)
+    interfaces: ens160
+    sources:
+    services: dhcpv6-client dns ssh
+    ports: (略)
+    ```  
+    ★★★ 永久開啟 DNS port 53 ★★★
+    ```bash=
+    sudo firewall-cmd --add-service=dns --permanent
+    sudo firewall-cmd --reload
+    ```
+  * 為何設定暫時的 rules 都無效呢？  
+    假設臨時要開放 port 8888，於是執行了
+    ```bash=
+    sudo firewall-cmd --add-port=8888/tcp 
+    sudo firewall-cmd --reload
+    sudo firewall-cmd --list-all
+    ```  
+    卻發現 --list-all 的結果都沒將 port:8888 這 rule 給加入，  
+    這是因為在第二步驟時做了 reload ，不是設定沒用而是被 reload 給清除了，  
+    所以臨時性的只要  
+    ```bash=
+    sudo firewall-cmd --add-port=8888/tcp 
+    sudo firewall-cmd --list-all
+    ```  
+  * 查看永久的設定
+    ```bash=
+    firewall-cmd  --list-all --permanent 
+    ```
+    ![檢視runtime和永久的firewall設定](./pics/firewall_permanent.png "檢視runtime和永久的firewall設定")  
 
 ### 單元 3 - 新一代管理介面 cockpit
+  * Red Hat 8 有一個新的管理介面叫 "**Cockpit**".  
+    若登入帳號有管理者權限就可以多看到一段訊息.  
+    輸入 `sudo systemctl enable --now cockpit.socket` 就可以啟用Cockpit Web服務
+    ![帳號有管理者](./pics/view_cockpit_info.png )  
+  * 輸入 `netstat -tanlp` 檢視網路狀態,確認 **port: 9090** 已經開始監聽,表示Cockpit服務正常運作.  
+    也可用新指令 `ss -tanlp` 結果同上.  
+    ![netstat檢視網路狀態](./pics/netstat_view_cockpit_port.png "netstat檢視網路狀態")  
+  * 啟用後就可透過IP和Port進入cockpit的web管理介面  
+    ![cockpit管理介面](./pics/cockpit_web_login_page.png "cockpit管理介面")  
+    ![cockpit管理介面_網路資訊](./pics/cockpit_web_monitor_info.png "cockpit管理介面_網路資訊")  
 
 ## 第 9 章 軟體套件管理 RPM、YUM、DNF
 ### 單元 1 - 軟體套件 RPM: 查詢 query
