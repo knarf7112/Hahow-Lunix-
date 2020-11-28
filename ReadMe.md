@@ -1454,13 +1454,83 @@
 
 ## 第 9 章 軟體套件管理 RPM、YUM、DNF
 ### 單元 1 - 軟體套件 RPM: 查詢 query
-
+  * `rpm` (RedHat Package Manager)將你要安裝的軟體先編譯過，  
+    並且打包成為 RPM 機制的包裝檔案，透過包裝好的軟體裡頭預設的資料庫記錄，  
+    記錄這個軟體要安裝的時候必須具備的相依屬性軟體，  
+    當安裝在你的 Linux 主機時， RPM 會先依照軟體裡頭的資料查詢 Linux 主機的相依屬性軟體是否滿足，   
+    若滿足則予以安裝，若不滿足則不予安裝。   
+    是以一種資料庫記錄的方式來將你所需要的軟體安裝到你的 Linux 系統的一套管理機制  
+  * 常用的 `rpm` 指令如下:
+    * `rpm -qa` : 查詢目前所有安裝的套件
+    * `rpm -i xxx` : 安裝套件
+    * `rpm -U xxx` : 更新套件
+    * `rpm -e` : 刪除套件
+  * [操作的硬體平台](http://linux.vbird.org/linux_basic/0520rpm_and_srpm.php#intro_advance)  
+    ![rpm操作硬體平台](./pics/rpm_applied_platform.png "rpm操作硬體平台")  
+  * 套件的規範說明:  
+    ![rpm列表資訊說明](./pics/rpm_qa_info.png "rpm列表資訊說明")  
+  * 輸入 `rpm -qi gzip` 可檢視gzip套件的詳細說明  
+    ![rpm列出套件詳細說明](./pics/rpm_qi_package_detail.png "rpm列出套件詳細說明")  
+  * 輸入 `rpm -ql gzip` 可列出套件所安裝的檔案清單  
+    ![rpm列出安裝檔案清單](./pics/rpm_ql_instal_file_list.png "rpm列出安裝檔案清單")  
+  * 輸入 `rpm -qf /etc/fstab` 可檢視檔案 `fstab` 來源是從哪個套件來的  
+    ![rpm檢視檔案的來源套件](./pics/rpm_qf_find_file_source.png "rpm檢視檔案的來源套件")
 ### 單元 2 - 安裝 RPM 軟體套件 : install
-
+  * 測試安裝套件前置步驟
+    1. 先在virtualbox上掛載CentOS的印象檔到虛擬光碟機上   
+    2. 輸入 `blkid` 檢視光碟印象檔是否已在裝置上
+       ![blkid檢視印象檔](./pics/blkid_sr0.png "blkid檢視印象檔")  
+    3. 輸入 `mount /dev/sr0 /media/iso` 將裝置 `dev/sr0` 掛載到 `/media/iso` 上
+       ![將CentOS映象檔掛載起來](./pics/mount_iso_CentOS.png "將CentOS映象檔掛載起來")  
+    4. 檢視CentOS映像檔內的 RPM 相關檔案,  
+       於 `/media/iso/AppStream/Packages/` 內的檔案全都是可以使用的 **RPM** 檔案  
+       ![檢視映像檔內所有的RPM檔案](./pics/ls_view_all_RPM_files.png "檢視映像檔內所有的RPM檔案")
+    5. 安裝 `mc` (Midnight Commander: 檔案管理工具) 來做RPM檔案安裝測試  
+       輸入 `rpm -ivh /media/iso/AppStream/Packages/mc-` 加上tab鍵快速輸入套件名稱  
+       安裝後,輸入 `mc` 可進入管理工具的介面 (tab鍵可切換,F10鍵可離開介面)
+       ![rpm安裝mc套件](./pics/rpm_install_mc.png "rpm安裝mc套件")  
+    6. 刪除 `mc` 套件 輸入 `rpm -ivh mc` 他就會將目前安裝套件是叫 `mc` 的移除掉  
+       ![rpm移除mc套件](./pics/rpm_e_remove_package.png "rpm移除mc套件")  
+  * 若安裝的套件依賴其他套件,安裝就會產生錯誤,需要將依賴的套件先安裝上去  
+    ![rpm套件安裝失敗](./pics/rpm_package_dependency_error.png "rpm套件安裝失敗")
+  
 ### 單元 3 - YUM 與 DNF 套件管理
-
+  * `yum` (Yellow dog Updater, Modified) 將軟體套件的檔案集中在網路伺服器上.  
+    當透過 `yum` 安裝套件,他會把套件名稱送到伺服器上查詢, server會知道有多少相依的套件需要安裝.  
+    再把所有相依的套件打包成一包下來到使用者的電腦上,再依據正確的順序安裝  
+    ![YUM安裝套件流程](./pics/yum_flow_demo.png "YUM安裝套件流程")  
+  * `yum` 的設定檔案放在 `/etc/yum.conf` 內  
+    ![YUM檢視設定資訊](./pics/yum_config_info.png "YUM檢視設定資訊")  
+  * `yum install 軟體名稱` 就會開始執行安裝程序,會自動將所有相依的套件下載回來安裝  
+    (若參數後面加上 `-y` 就不用再輸入`y`鍵做確認)  
+    ![yum安裝ant套件](./pics/yum_install_ant.png "yum安裝ant套件")  
+    ![yum安裝ant套件完成](./pics/yum_install_ant_done.png "yum安裝ant套件完成")
+  * 可以使用 `dnf install 軟體名稱 -y` (dnf: Dandified Yum) 安裝,安裝方式同 `yum` 
 ### 單元 4 - 軟體檔案庫 repo 管理，EPEL 擴充軟體庫，remi 安裝 PHP7.4
-
+  * 輸入 `dnf repolist` 列目目前電腦上的檔案庫資訊  
+    ![dnf列出目前檔案庫資訊](./pics/dnf_repolist.png "dnf列出目前檔案庫資訊")
+  * 輸入 `dnf search php` 就可以查詢套件 `php` 是否可以安裝
+    ![dnf查詢套件php](./pics/dnf_search_php.png "dnf查詢套件php")  
+  * EPEL(Extra Package Enterprise Linux) 是由 **Fedora** 社群維護額外型的檔案庫,  
+    若想安裝的軟體查詢不到,可輸入 `dnf install -y epel` 來安裝找不到的套件  
+    `epel` 會將額外的檔案庫安裝到 `/etc/yum.repos.d/` 之下  
+    ![dnf安裝額外型檔案庫](./pics/dnf_install_epel.png "dnf安裝額外型檔案庫")
+  * 透過額外型的檔案庫安裝套件 `htop`
+    輸入 `dnf search htop` 查詢套件資訊,再輸入 `dnf install -y htop`  
+    就會到EPEL的檔案庫下載並安裝  
+    ![dnf從額外型檔案庫安裝htop](./pics/dnf_install_htop.png "dnf從額外型檔案庫安裝htop")  
+  * 安裝 `PHP7` 套件,但PHP7套件是放在 **remi** 檔案庫,所以找不到  
+    google搜尋 `php rpm` 並找到remi網站再取得RPM的URL   
+    ![取得PHP7的RPM_URL](./pics/get_php7_repo.png "取得PHP7的RPM_URL")    
+    再輸入 `dnf install https://rpms.remirepo.net/enterprise/remi-release-8.rpm` 後開始安裝PHP7  
+    ![dnf安裝PHP7](./pics/dnf_install_PHP7_byUrl.png "dnf安裝PHP7")  
+    安裝完成後輸入 `dnf search php7` 就可以查到相關資訊了
+    ![dnf查詢PHP7資訊](./pics/dnf_search_php7.png "dnf查詢PHP7資訊")  
+    接者再輸入 `dnf -install -y php74` 安裝php7.4版本,  
+    但要先確認`httpd`（檔案伺服器)是否有安裝,再裝php才有意義(php需要檔案伺服器)  
+    ![dnf安裝php74](./pics/dnf_install_php74.png "dnf安裝php74")  
+    ![dnf安裝httpd](./pics/dnf_install_httpd.png "dnf安裝httpd")  
+    
 ## 第 10 章 系統服務與網頁伺服器
 ### 單元 1 - 系統服務 systemd
 
