@@ -1533,13 +1533,79 @@
     
 ## 第 10 章 系統服務與網頁伺服器
 ### 單元 1 - 系統服務 systemd
+  * 在linux架設網頁伺服器可以用 `apache` 或 `ngnix` 但必須常駐在背景執行
+  * `systemd` (System Daemon) 是linux開機完成後第一個執行的程式,管理整個linux的常駐程式  
+     服務類型很多,有些一起動就會監聽某些 `port` 號,像是網頁伺服器(port:80)
+  * `systemd` 使用的指令是 `systemctl` (System Control),用來管理各類的服務  
+  * 輸入 `ls /usr/lib/systemd/` 檢視 `systemd` 目錄
+    ![systemd目錄內容](./pics/ls_systemd.png "systemd目錄內容")  
+  * 輸入 `ls /usr/lib/systemd/system` 目錄裡面的每個設定檔都是一個單元(Unit)  
+    ![system的單元設定檔](./pics/ls_systemd_system.png "system的單元設定檔")  
+  * Systemd 可以管理所有系統資源並將系統資源劃分為12類, 
+    將每個系統資源稱為一個 Unit。Unit 是 Systemd 管理系統資源的基本單位.  
+    使用一個 Unit File 作為 Unit 的單元文件，Systemd 通過單元文件控制 Unit 的啟動.  
+    > 例如，MySQL服務被 Systemd 視為一個 Unit，使用一個 mysql.service 作為啟動配置文件
+  * Systemd 將系統資源劃分為12類，對應12種類型的單元文件.
+    ![system分類](./pics/system_category.png "system分類")  
+  * [Unit File（單元文件|配置文件）](https://www.3chy2.com.tw/3c%E8%B3%87%E8%A8%8A/linux-systemd-%E8%A9%B3%E7%B4%B0%E4%BB%8B%E7%B4%B9-unit%E3%80%81unit-file%E3%80%81systemctl%E3%80%81target/) 
+  * Target代表的是一個階段標的, 可訂定在某個階段時,需要啟動什麼Unit服務,  
+    ex: 進入linux可以選擇是單人模式或是多人模式(有或沒有圖形介面)...等資訊
+    ![範例檢視graphical服務的設定值](./pics/view_graphical.target.png "範例檢視graphical服務的設定值")  
+  * 設定的target是可以切換的, 輸入 `systemctl isolate multi-user.target` 這樣一開機就會進入文字介面之下,  
+    再輸入 `system isolate graphical.target`就可回到原本的圖形介面  
+    ![systemctl切換模式](./pics/systemctl_isolate_target.png "systemctl切換模式")  
+  * 輸入 `cat /usr/lib/systemd/system/httpd.service` 檢視 `httpd` 服務的設定檔  
+    (當有安裝 Apache http伺服器就會有此設定檔,方便systemd管理)
+    ![檢視httpd服務的設定檔](./pics/view_httpd.service_config.png "檢視httpd服務的設定檔")  
+  * 輸入 `systemctl status httpd` 可檢視 `httpd` 服務狀態  
+    ![檢視httpd服務狀態](./pics/systemctl_status_httpd.png "檢視httpd服務狀態")
+  * 輸入 `systemctl start httpd.service` 可啟動 `httpd` 服務
+    ![啟動httpd服務狀態](./pics/systemctl_start_httpd.png "啟動httpd服務")
+  * 輸入 `systemctl stop httpd.service` 可停止 `httpd` 服務
+    ![停止httpd服務狀態](./pics/systemctl_stop_httpd.png "停止httpd服務")
+  * 輸入 `systemctl restart httpd.service` 可重啟 `httpd` 服務  
+    ![重啟和開機啟用停用httpd服務](./pics/systemctl_restart_enable_disable_httpd.png "重啟和開機啟用停用httpd服務")  
 
 ### 單元 2 - 管理服務 systemctl 指令, Apache 網頁伺服器
-
+  * Apache `httpd` 服務監聽的是port `80`,若要使用 **https** 必須要打開port `443` 
+    ![防火牆開啟https服務](./pics/firewall_add_service_https.png "防火牆開啟https服務")  
+  * 再輸入 `ps aux | grep httpd` 檢視 httpd 相關的行程(process)  
+    ![檢視httpd的行程](./pics/ps_view_httpd.png "檢視httpd的行程")  
+  * 檢視 Apache 的httpd主要設定檔, 輸入 `vim /etc/httpd/conf/httpd.conf`  
+    ![檢視httpd主要設定檔](./pics/vim_view_httpd_config.png "檢視httpd主要設定檔")  
+  
 ### 單元 3 - 架設範例網頁
-
+  * 架設網站的步驟: 
+    1. 到網站google上找個有提供 template 網站[下載](https://www.free-css.com/free-css-templates/page258/highway)的網站並複製下載的zip超連結(https://www.free-css.com/assets/files/free-css-templates/download/page258/highway.zip)  
+    2. 輸入 `wget https://www.free-css.com/assets/files/free-css-templates/download/page258/highway.zip` 就可以把檔案下載回來  
+      ![下載zip檔](./pics/wget_template_website.png "下載zip檔")
+    3. 解壓縮輸入 `unzip xxx.zip` 將檔案解壓縮到當前目錄下  
+       ![解壓縮zip檔](./pics/unzip_template_website.png "解壓縮zip檔")  
+    4. 檢視解壓縮後的資料夾  
+       ![檢視解壓縮後的資料夾](./pics/view_unziped_folder.png "檢視解壓縮後的資料夾")  
+    5. 輸入 `cp /var/www/html/` 將網站的資料夾複製到Apache內設定的Root資料夾  
+       ![複製資料夾到Root資料夾](./pics/cp_to_apache_documentRoot.png "複製資料夾到Root資料夾")  
+    6. 變更資料夾內檔案的擁有者權限,改成Apache使用的權限 `apache`  
+       先到html目錄之下 `cd /var/www/html`  
+       輸入 `chown -R apache:apache *` 將**擁有者**和**群組**都換成 `apache` 
+       ![變更所有檔案權限](./pics/chown_all_files_to_apache.png "變更所有檔案權限")  
+    7. 在外部用遊覽器測試網站是否可以進入  
+       因為 /var/www/html/ 是根目錄,且預設會使用index.html當進入時的文件  
+       遊覽器輸入 '192.168.1.111' 確認網站是否可以進入
+       ![遊覽器檢視網站](./pics/browser_view_template_website.png "遊覽器檢視網站")
 ### 單元 4 - 模組與設定檔
-
+  * Apache 的主資料夾都在 `/etc/httpd/` 裡面有Apache的主設定值  
+    ![Apache主資料夾](./pics/apache_conf.png "Apache主資料夾")  
+  * `/etc/httpd/modules` 連結到 `/usr/lib64/httpd/modules` 裡面有很多Apache的模組  
+    ![檢視apache模組](./pics/view_apache_modules.png "檢視apache模組") 
+    ![檢視apache模組設定檔](./pics/view_apache_module_config.png "檢視apache模組設定檔")  
+  * 建立一個.php檔案測試網站是否正常,輸入 `echo > test.php` 建立檔案  
+    ![建立php檔案](./pics/create_php_files.png "建立php檔案")
+    使用vim修改檔案內容 `vim /var/www/html/test.php`  
+    (要記得檢查httpd服務是啟動的)  
+    ![VIM修改PHP檔案](./pics/test_php.png "VIM修改PHP檔案")  
+    開啟遊覽器輸入 `192.168.1.111/test.php` 檢查是否可以執行  
+    
 ## 第 11 章 系統管理實務
 ### 單元 1 - MySQL(MariaDB) 資料庫安裝與設定
 
