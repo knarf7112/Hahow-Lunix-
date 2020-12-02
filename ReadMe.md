@@ -1489,7 +1489,7 @@
        輸入 `rpm -ivh /media/iso/AppStream/Packages/mc-` 加上tab鍵快速輸入套件名稱  
        安裝後,輸入 `mc` 可進入管理工具的介面 (tab鍵可切換,F10鍵可離開介面)
        ![rpm安裝mc套件](./pics/rpm_install_mc.png "rpm安裝mc套件")  
-    6. 刪除 `mc` 套件 輸入 `rpm -ivh mc` 他就會將目前安裝套件是叫 `mc` 的移除掉  
+    6. 刪除 `mc` 套件 輸入 `rpm -evh mc` 他就會將目前安裝套件是叫 `mc` 的移除掉  
        ![rpm移除mc套件](./pics/rpm_e_remove_package.png "rpm移除mc套件")  
   * 若安裝的套件依賴其他套件,安裝就會產生錯誤,需要將依賴的套件先安裝上去  
     ![rpm套件安裝失敗](./pics/rpm_package_dependency_error.png "rpm套件安裝失敗")
