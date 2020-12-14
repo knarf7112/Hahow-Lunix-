@@ -1608,19 +1608,238 @@
     
 ## 第 11 章 系統管理實務
 ### 單元 1 - MySQL(MariaDB) 資料庫安裝與設定
+  * MariaDB 就是 MySQL 的改良版
+  * 輸入 `dnf install mariadb-server` 安裝MariaDB  
+    ![安裝MariaDB](./pics/dnf_install_mariadb.png "安裝MariaDB")  
+  * 安裝完畢後要啟動**mariadb**服務,輸入 `systemctl start mariadb` 啟動服務  
+    第一次啟動服務需要做初始化服務的設定.  
+    1. 輸入 `mysql_secure_installation` 做初始化配置  
+    2. MySql的管理者帳號是 `root` ,第一次會詢問輸入密碼,先按enter接者再輸入新密碼  
+    3. 詢問是否移除匿名登入的使用者,按下 `y` 確認  
+    4. 詢問是否取消遠端登入 `mysql` ,按下 `y` 確認  
+    5. 詢問是否取刪除測試的資料庫,按下 `y` 確認  
+    6. 詢問是否重新讀取權限的表格,按下 `y` 確認  
+    7. 完成 `mysql` 初始化配置
+    ![mysql_secure_installation](./pics/mysql_secure_installation.png "初始化mysql")  
+  * 輸入 `mysql -u 帳號 -p` 按下enter後再輸入密碼就會進入 `mysql` 的控制台  
+    這邊就可以建立資料庫,表格,帳號,處裡權限...工作.  
+    輸入 `exit` 就可以離開 `mysql` 的控制台  
+    ![進入mysql控制台](./pics/login_mysql.png "進入mysql控制台")
+  * 輸入 `systemctl enable mariadb` 使開機就會自動啟動 `mariadb` 服務
+    ![啟用mairiadb服務](./pics/systemctl_enable_mariadb.png "啟用mairiadb服務")  
 
 ### 單元 2 - tar 壓縮檔案與活用 date 日期指令
-
+  * 有時可能需要備份網站內容, 使用範例網站的內容來做壓縮測試, 檔案位於 `/var/www/html` 
+  * `tar` 壓縮檔案的指令, 它可以將檔案集合起來包成一包再進行壓縮  
+    後面帶入的參數說明:  
+    `-c`: 產生新的包裹檔案  
+    `-v`: 觀看指令進度  
+    `-f`: 指定包裹檔案的名稱  
+    `-z`: 檔案壓縮  
+    ![tar指令示意圖](./pics/tar_demo.png "tar指令示意圖")  
+    ![tar壓縮檔案](./pics/tar_files.png "tar壓縮檔案")  
+    ![完成後的tar檔案](./pics/tar_done_file.png  "完成後的tar檔案")  
+  * 解壓縮檔案就輸入 `tar xvfz 檔案位置` 參數帶入 `x` 表示解壓縮檔案  
+    ![tar解壓縮檔案](./pics/tar_unzip_file.png "tar解壓縮檔案")  
+  * 利用時間指令 `date +%Y%m%d` 來將檔名附加上時間
+    ![壓縮檔名並附加上時間](./pics/tar_file_with_date.png "壓縮檔名並附加上時間")
 ### 單元 3 - SHELL程式設計: 批次建立帳號實務
+  * 在 `bash` 中可以設定變數並賦值給變數,   
+    使用 `echo` 後面接者雙引號包起來,裡面透過 `$` 字號加上變數名稱就可以取得變數的值  
+    若echo後面接者 `-n` 就不會換行  
+    ![shell測試](./pics/shell_test.png "shell測試")  
+  * shell 內的 forloop 寫法, `do` 和 `done` 之間就是迴圈會做的事  
+    ![for_loop](./pics/for_loop.png "for_loop")  
+    ![for_loop_test](./pics/for_loop_test.png "測試for_loop")
+  * 通常副檔名是 `.sh` 就表示為 **shell** 程式  
+    建立一個新的shell程序檔案  
+    ![建立shell程序檔案](./pics/test_shell_script.png "建立shell程序檔案")  
+    修改shell程序檔案的權限(沒有執行的權限)  
+    ![設定shell檔執行權限](./pics/chmod_shell_file.png "設定shell檔執行權限")  
+    執行此shell程序檔案輸入 `./test.sh`  
+    ![執行shell程序檔案](./pics/execute_shell_file.png "執行shell程序檔案")  
+    也可將輸出寫入到某個檔案 `./test.sh > test.txt`  
+    ![執行shell程序檔案並將結果導到某個檔案](./pics/execute_shell_output_to_file.png "執行shell程序檔案並將結果導到某個檔案")  
+  * 輸入 `seq -w x 累計值 y` 會循序從x+累計值到y結束, `-w` 會將數字前面補0  
+    ![seq數字](./pics/seq_number.png "輸出順序數字")  
+  * 安裝產生亂數的套件 輸入 `dnf install -y pwgen`
+    ex: 建立亂數密碼  
+    ```bash
+    # 表示產生3組6個字元的亂數密碼
+    [root@localhost ~]# pwgen 6 3
+    Reing3 iebeT1 Getha8
+    ```
+  * `chpassws` 指令可以依據提供的帳號來修改密碼  
+    ex: 提供帳號:mike並將密碼改成pass123  
+    ```bash
+    [root@localhost ~]# echo "mike:pass123" | chpasswd
+    [root@localhost ~]# 
+    ```
+  * 實務練習: 建立shell程序來批次建立帳號與密碼  
+    步驟: 
+      1. 建立一個 shell script 輸入 `vim add.sh`  ,寫完後 `esc` -> `:` -> `wq` -> 離開vim
+         ```bash
+         #!/bin/bash
+         # 假設定義20個帳號是u8801~u8820
+         for n in `seq -w 1 20`
+         do
+           # 使用useradd指令,群組為cs, 帳號u88開頭, $n會將上面的值帶入
+           useradd -g cs u88$n
+           # 將帳號寫入user.list的檔案中(不換行,要接者寫入亂數產生的密碼)
+           echo -n "u88$n:" >> user.list
+           # 接者上面的值"u8801:"後面透過pwgen產生亂數密碼接者寫入到上面的那一行後面,然後再產生換行
+           echo `pwgen 6 1` >> user.list
+         done
+         ```
+      2. 透握管線把user.list內的帳號再把密碼設定完成
+         ```bash
+         # 將檔案內的每一行都透過chpasswd把密碼換掉
+         cat user.list | chpasswd
+         ```   
+  * 利用 `chpasswd` 讀取檔案裡面列表的帳密並修改密碼  
+    ```bash
+    [root@localhost ~]# chpasswd < new_passwd_list.txt
+    [root@localhost ~]# 
+    ```
+
 
 ### 單元 4 - 設定磁碟用量配額設定
+  * 設定磁碟用量配額是讓管理員可以適當的限制硬碟的容量給使用者，以妥善的分配系統資源.  
+  * quota: 磁碟配額,linux可以針對磁碟分割區做限額設定.  
+    一般伺服器裡面的帳號會從根目錄另外切出一個分割區來放這些帳號並設定磁碟配額設定.  
+    範例使用 `/dev/sdc1` 來設定磁碟配額  
+    ![quota_disk2](./pics/quota_disk2.png "quota_disk2")  
+  * `xfs_quota -x /dev/sdc1` 可用來設定或檢視配額,有兩種方式(互動/非互動),-c表示不進入互動模式,  
+    進入互動模式後可輸入 `quit` 來離開  
+    `-x`: 表示專家(expert)模式,會有一些進階選項  
+    `-c`: 表示直接執行後面串接的指令(不需要互動)  
+  * CentOS 7和8都使用xfs做檔案系統的格式,輸入`xfs` 按 `tab` 檢視目前可用的`xfs`指令  
+    ![view_xfs_quota](./pics/view_xfs_quota.png "檢視xfs_quota")  
+    做磁碟配額之前要重新掛載disk2並且加入一個參數才能做配額設定,  
+    所以先輸入 `umount /disk2` 卸載**disk2**完後 `df -h` 就看不到**disk2**了  
+    ![umount_disk2](./pics/umount_disk2.png "umount_disk2")  
+    再輸入 `mount -o uquota,gquota /dev/sdc1 /disk2`  
+    `-o` (option)表示可以帶入參數,  
+    參數值 `uquota` 表示對user做磁碟限額配置(單人總用量)  
+    參數值 `gquota` 表示對group做磁碟限額配置(群組總用量)  
+    `df -h` 和 `blkid` 只能看到掛載的分割區,但看不到詳細的選項設定  
+    直接輸入 `mount | grep "disk2"` 按下enter後就可以看到disk2的選項設定  
+    有 `usrquota` 的設定後續才能設定使用者的限額配置  
+    ![檢視磁碟分割的option設定](./pics/mount_view_uquota.png "檢視磁碟分割的option設定")  
+    再接者輸入 `xfs_quota -x /dev/sdc1` 進入disk2的配額設定模式  
+    ![進入xfs_quota](./pics/xfs_quota_view.png "進入xfs_quota")
+  * 配額限制分為:  
+    1. inode限制: 限制檔案(包含資料夾)數量
+    2. block限制: 限制磁碟容量的限制  
+  * 在配額設定中輸入 `limit bsoft=50m bhard=60m 帳號名稱`  
+     `bsoft=50m` 表示限制空間的基本配額為50mb,超過50m之後每次登入系統都會主動提示.
+     `bhard=60m` 表示限制空間的絕對配額為60mb,超過60m之後會鎖住該用戶的磁碟使用權.
+    ![帳號test01做限額配置](./pics/xfs_quota_limit_test01.png "帳號test01做限額配置")  
+  * 測試test01這個帳號限額功能是否有效  
+    1. 在 `/disk2` 下建立一個資料夾 `/test01` 
+       輸入 `mkdir /disk2/test01` 再輸入 `chown test01 /disk2/test01/` 將擁有者換成 **test01**  
+       ![建立測試用的資料夾](./pics/mkdir_test01.png "建立測試用的資料夾")  
+    2. 用test01帳號登入並切換到 `/disk2/test01` 目錄  
+       輸入 `fallocate -l 50m file50m` 來產生檔案,  
+       `-l 50m` 表示要產生50mb的單一檔案.
+       `file50m` 表示檔案名稱  
+       ![產生一個50mb的檔案](./pics/fallocate_file_50m.png "產生一個50mb的檔案")  
+    3. 接下來在產生一個5m的檔案(這時已經超過soft值未達hard值,但沒有提示),  
+       再接者產生一個10m的檔案(超過hard值,跳出警示並產生一個0mb的檔案)  
+       ![超過配額限制](./pics/fallocate_file_overflow.png "超過配額限制")   
+    4. 輸入 `xfs_quota -x /dev/sdc1` 進入配額設定模式  
+       再輸入 `report -h` 檢視 test01的warn/grace欄位會顯示 `6 days` 表示還有6天可以將檔案降低到soft值之下,否則時間到期後就會將hard值設定為soft值,即無法再寫入檔案.  
+       ![檢視限額資訊](./pics/xfs_quota_view_grace.png "檢視限額資訊")  
 
 ## 第 12 章 Docker 容器管理
 ## 單元 1 - Docker 容器技術與安裝
+  * container依靠linux內的核心,核心再去切割個別的區塊.  
+    容器主要是靠 LXC 和 aufs 等Linux技術達成  
+  * LXC:  
+    * 利用Kernel namespaces 達到在核心中隔離多個空間  
+    * 每個空間都可以擁有自己的一片天  
+    * 在一個隔離空間中都會有一個 PID 是 1 的 Linux 啟動行程
+    * 在這空間中它認為自己就是最初的行程
+    * 用隔離空間可以讓主要核心執行多套不同的Linux核心
+  * AUFS:
+    * advanced multi-layered unification filesystem
+    * 一個檔案系統的更動採用分層疊架的方式
+    * 更動檔案系統後,這個變動就成為一層
+    * 每一層只記錄與上一層的差異
+  * DOCKER:
+    * Docker就是利用 LXC 與 aufs 等技術實作出的容器管理軟體
+    * Docker 可記錄一個或多個系統的變動
+    * 依規格封裝起來成為一層一層的架構
+    * 新的變動疊在舊的上面
+    * 需要這個安裝或設定好的系統時, 由底下一層一層執行
+      ![內容物疊加](./pics/container_demo.png "內容物疊加")  
+  * Image & Container
+    * Image : 是一個儲存在磁碟中的檔案, 裡面封裝了要產生容器時的所有層層資訊,  
+      不是在系統中執行的個體(程序)  
+    * Container : 是由 Image 所產生的實體容器,它會在系統中擁有狀態,可以是執行中或結束.  
+  * Docker 版本:
+    * Docker CE: Community Edition 社群版(CentOS/Red Hat安裝這個)
+    * Docker EE: Enterprise Edition 企業版  
+  * 輸入 `rpm -qa | grep docker` 檢視目前系統是否有安裝docker相關的套件  
+    因為 Red Hat 要安裝 Docker 必須將相關的docker都移除掉(套件開頭是docker的)  
+    ![檢視並刪除docker套件](./pics/rpm_qa_docker_packages.png "檢視並刪除docker套件")  
+  * 查詢docker安裝(去https://download.docker.com/)並點擊linux的centos  
+    ![取得下載超連結](./pics/download_docker_ce.png "取得下載超連結")  
+  * 輸入 `dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo` 來將超連結加入檔案庫中  
+    ![新增docker到檔案庫](./pics/dnf_add_repo_docker.png "新增docker到檔案庫")  
+  * 輸入 `dnf install docker-ce`,但出現錯誤  
+    ![安裝docker但出現錯誤](./pics/install_docker_ce_failed.png "安裝docker但出現錯誤")  
+    (官方bug)移除掉 podman-manpages 輸入 `dnf remove podman-manpages`  ,完成docker安裝後再裝回去  
+    [網路找到安裝的方法](https://medium.com/@anuketjain007/installation-of-docker-fails-on-centos-8-with-error-package-containerd-io-f7a338b34a71), 輸入`yum install -y https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm`  
+    ![安裝缺少的軟體](./pics/yum_install_containerd_io.png)  
+    安裝完後再輸入 `dnf install --nobest docker-ce` 就可以開始安裝(非最佳安裝,但可以跑)  
+    ![完成安裝dockerCE](./pics/dnf_install_docker_ce.png "完成安裝dockerCE")
+  * 輸入 `systemctl start docker` 啟動docker服務並輸入 `ls /var/lib/docker` 檢視目錄  
+    ![啟用docker服務](./pics/systemctl_start_docker.png "啟用docker服務")  
+  * 輸入 `docker run hello-world`
+    ![run_docker](./pics/docker_run_hello_world.png)  
 
 ### 單元 2 - Image 映象檔與 Container 容器，指令操作
+  * 容器是由Image產生的  
+  * IMAGE可以去 HUB.DOCKER.COM 下載
+  * 輸入 `docker info` 檢視目前docker狀態(執行了那些容器,記憶體多大...etc)  
+    ![docker_info](./pics/docker_info.png "檢視目前docker狀態")  
+  * 輸入 `docker pull centos:latest` 表示從網路下載 CentOS的最新版  
+    ![下載ceontos最新版容器](./pics/docker_pull_centos.png "下載ceontos最新版容器")  
+  * 輸入 `docker images` 可檢視目前有哪些印象檔  
+    ![檢視目前的容器](./pics/docker_images.png "檢視目前的容器")  
+  * 輸入 `docker run centos:latest /bin/cat /etc/hosts` (印象檔名稱:最後版本)   
+    docker馬上就會執行容器並帶入命令再返回執行結果後關閉容器  
+    ![run_docker_with_cmd](./pics/docker_run_with_cmd.png "run_docker_with_cmd")  
+  * 輸入 `docker ps -a` 可檢視目前所有容器狀態, `-q`:只會列出dockerID  
+    ![docker_ps_a](./pics/docker_ps_a.png "docker_ps_a")  
+    若想要幫容器取名稱方便檢視,執行時可輸入 `docker run --name=myCentOS centos:latest /bin/cat /etc/hosts`
 
 ### 單元 3 - 建立私人雲服務 NextCloud 的 docker 容器
+  * 輸入 `docker run -i -t --name=web centos:latest /bin/bash` 按下enter後  
+    就會進入容器的終端機    
+    `-i` : 建立一個互動(interactive)的容器  
+    `-t` : TTY縮寫,Terminal終端機,這樣容器才能跟外部互動  
+    ![docker_run_interactive](./pics/docker_run_interactive.png "docker_run_interactive")  
+  * 刪除容器必須要容器是停止的狀態  
+    輸入 `docker stop 容器ID` 就會停止容器(容器Id可以輸入3碼就好)  
+    ![刪除容器](./pics/docker_rm_dockerId.png "刪除容器")  
+  * 安裝 nextcloud 容器(它已經包了Apache,網頁伺服器,MySQL,PHP...等等)  
+    ![nextcloud](./pics/nextcloud.png)  
+    輸入 `docker pull nextcloud` 下載image  
+    完成後輸入 `docker images` 檢視印象檔  
+    ![下載nextcloud](./pics/docker_pull_nextcloud.png "下載nextcloud")  
+  * 輸入 `docker run -d -p 8080:80 --name=nextcloud nextcloud`  
+    當容器外部的port:8080收到請求就會轉發給容器的port:80  
+    `-d` : 常駐(deamon),不會執行完就關閉  
+    `-p` : 指定容器內部的port和外部的port對應(port mapping)
+    ![常駐執行nextcloud容器](./pics/docker_run_nextcloud.png "常駐執行nextcloud容器")  
+  * 外部遊覽器可以透過port: 8080 進入到啟動的nextcloud容器的網頁服務  
+    遊覽器輸入 `192.168.1.111:8080` 測試看看是否可以進入網頁  
+    (nextcloud=owncloud的分支)  
+    ![遊覽器測試nextcloud](./pics/browser_test_nextcloud.png "遊覽器測試  nextcloud")  
+    檢視看一下常駐的容器狀態並關閉看看  
+    ![檢視cloudnext](./pics/docker_ps_nextcloud.png "檢視cloudnext")  
 
 ## 第 13 章 募資解鎖: Google 雲端 CentOS 8 虛擬機器
 ### 單元 1 - Google 雲端虛擬機器準備項目
